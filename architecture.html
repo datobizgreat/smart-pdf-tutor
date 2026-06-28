@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart PDF Tutor - Project Architecture</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --border: #dfe7f1;
+      --text: #23374d;
+      --muted: #5f728a;
+      --accent: #2563eb;
+      --accent2: #7c3aed;
+      --success: #0f766e;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    h1, h2, h3 {
+      color: var(--accent);
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      margin-bottom: 24px;
+    }
+    .hero p { color: rgba(255,255,255,0.9); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .component {
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      margin-bottom: 10px;
+    }
+    .component strong { display: block; margin-bottom: 4px; }
+    .badge {
+      display: inline-block;
+      background: #e8f0ff;
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    ul { margin: 8px 0 0 18px; }
+    .flow {
+      background: #f3f7ff;
+      border: 1px dashed var(--accent);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .diagram-wrap {
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+    .diagram-wrap .mermaid {
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    code {
+      background: #eef2f7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>Smart PDF Tutor Architecture</h1>
+      <p>This document explains the structure of the project, the main components, and how they interact to turn uploaded PDFs into an AI-powered learning experience.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Project Overview</h2>
+      <p>The Smart PDF Tutor is a full-stack application that allows users to upload PDF files and interact with them using AI-powered features such as question answering, summarization, quizzes, and flashcards.</p>
+      <p>The system is divided into three major layers:</p>
+      <ul>
+        <li><strong>Frontend</strong> – user interface for uploading PDFs and chatting with the tutor.</li>
+        <li><strong>Backend</strong> – API layer that processes uploads, extracts text, and prepares data for AI features.</li>
+        <li><strong>Data and AI Services</strong> – PDF parsing, chunking, embeddings, and LLM integration.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2. High-Level Architecture</h2>
+      <div class="flow">
+        <strong>Flow:</strong><br />
+        User uploads PDF → Backend stores file → PDF text is extracted → Text is split into chunks → Chunks are prepared for embeddings/LLM → AI responses are returned to the frontend.
+      </div>
+      <div class="diagram-wrap">
+        <pre class="mermaid">
+flowchart LR
+    U[User] --> FE[React Frontend]
+    FE --> API[FastAPI Backend]
+    API --> PDF[PDFProcessor]
+    PDF --> TXT[Extracted Text]
+    TXT --> CH[Text Chunking]
+    CH --> AI[Embeddings / LLM Service]
+    AI --> RESP[Answer / Summary / Quiz]
+    RESP --> FE
+        </pre>
+      </div>
+      <div class="grid">
+        <div class="component">
+          <strong>Frontend Layer</strong>
+          <span class="badge">React</span>
+          <ul>
+            <li>Home page for PDF upload</li>
+            <li>Chat page for asking questions</li>
+            <li>Navigation and UI components</li>
+          </ul>
+        </div>
+        <div class="component">
+          <strong>API Layer</strong>
+          <span class="badge">FastAPI</span>
+          <ul>
+            <li>Handles upload requests</li>
+            <li>Exposes REST endpoints</li>
+            <li>Returns structured JSON responses</li>
+          </ul>
+        </div>
+        <div class="component">
+          <strong>Processing Layer</strong>
+          <span class="badge">PDF + AI</span>
+          <ul>
+            <li>Extracts text from uploaded documents</li>
+            <li>Creates chunks for retrieval</li>
+            <li>Supports future embeddings and LLM use</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Main Components</h2>
+
+      <h3>3.1 Frontend Components</h3>
+      <div class="component">
+        <strong>App</strong>
+        <p>The root React application that wires the pages and routes together.</p>
+      </div>
+      <div class="component">
+        <strong>Home Page</strong>
+        <p>Provides the main landing experience, including the PDF upload interface and feature overview.</p>
+      </div>
+      <div class="component">
+        <strong>Chat Page</strong>
+        <p>Lets the user ask questions about the uploaded document and displays AI replies.</p>
+      </div>
+      <div class="component">
+        <strong>PDFUpload Component</strong>
+        <p>Handles file selection, validation, and sending the file to the backend.</p>
+      </div>
+      <div class="component">
+        <strong>Navigation Component</strong>
+        <p>Provides basic page navigation across the app.</p>
+      </div>
+
+      <h3>3.2 Backend Components</h3>
+      <div class="component">
+        <strong>FastAPI App</strong>
+        <p>The main server application that defines routes and handles incoming requests.</p>
+      </div>
+      <div class="component">
+        <strong>Upload Endpoint</strong>
+        <p>Receives a PDF file, stores it locally, and extracts text from it.</p>
+      </div>
+      <div class="component">
+        <strong>Question Endpoint</strong>
+        <p>Accepts a user question and returns an answer based on the document context.</p>
+      </div>
+      <div class="component">
+        <strong>Summarize Endpoint</strong>
+        <p>Planned endpoint for generating summaries from uploaded content.</p>
+      </div>
+      <div class="component">
+        <strong>Quiz Endpoint</strong>
+        <p>Planned endpoint for generating quiz questions from the document.</p>
+      </div>
+
+      <h3>3.3 Service Components</h3>
+      <div class="component">
+        <strong>PDFProcessor</strong>
+        <p>Responsible for reading PDFs, extracting text, returning page content, and splitting text into chunks.</p>
+      </div>
+      <div class="component">
+        <strong>EmbeddingsService</strong>
+        <p>Prepares text for semantic search and similarity matching. This is used for future retrieval-based AI features.</p>
+      </div>
+      <div class="component">
+        <strong>LLMService</strong>
+        <p>Will connect the app to an LLM such as OpenAI or Gemini to generate grounded answers and study features.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4. Data Flow</h2>
+      <ol>
+        <li>User selects and uploads a PDF from the React frontend.</li>
+        <li>The backend accepts the file through the upload endpoint.</li>
+        <li>The PDF is read and text is extracted by the PDF processor.</li>
+        <li>The text is divided into smaller chunks for later processing.</li>
+        <li>The system can then use embeddings and an LLM to answer questions or generate study help.</li>
+        <li>The final response is sent back to the frontend and displayed in the chat interface.</li>
+      </ol>
+      <div class="diagram-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as React UI
+    participant BE as FastAPI
+    participant PP as PDFProcessor
+    participant AI as Embeddings/LLM
+
+    U->>FE: Upload PDF
+    FE->>BE: POST /upload
+    BE->>PP: Extract text
+    PP-->>BE: Text + metadata
+    BE->>AI: Prepare chunks / context
+    AI-->>BE: Generated response
+    BE-->>FE: JSON response
+    FE-->>U: Show result
+        </pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>5. Current Project Status</h2>
+      <ul>
+        <li><strong>Implemented:</strong> React frontend, FastAPI backend, PDF upload, PDF extraction, basic tests.</li>
+        <li><strong>Planned:</strong> embeddings, vector search, RAG pipeline, LLM integration, authentication, and database persistence.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>6. Suggested Future Architecture</h2>
+      <p>As the project grows, the architecture can evolve into:</p>
+      <ul>
+        <li><strong>Database layer</strong> for users, documents, and chat history</li>
+        <li><strong>Vector database</strong> such as FAISS or Chroma for document retrieval</li>
+        <li><strong>Authentication service</strong> for user accounts</li>
+        <li><strong>Deployment layer</strong> with frontend on Vercel and backend on Render or Railway</li>
+      </ul>
+    </div>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+</body>
+</html>
