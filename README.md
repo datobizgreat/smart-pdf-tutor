@@ -117,6 +117,7 @@ The API will be available at `http://localhost:8000`
 
 - `POST /upload` - Upload a PDF file
 - `GET /pdf/{document_id}/pages` - Get all pages from a document
+- `DELETE /pdf/{document_id}` - Delete a uploaded PDF file from storage
 - `POST /question` - Ask a question (placeholder for Phase 8-9)
 - `POST /summarize/{document_id}` - Summarize document (placeholder)
 - `POST /quiz/{document_id}` - Generate quiz (placeholder)
@@ -130,10 +131,31 @@ curl -X POST -F "file=@document.pdf" http://localhost:8000/upload
 # Get document pages
 curl http://localhost:8000/pdf/document/pages
 
+# Delete a PDF by document_id
+curl -X DELETE http://localhost:8000/pdf/document
+
 # Ask a question
 curl -X POST -H "Content-Type: application/json" \
   -d '{"question": "What is...?", "document_id": "document"}' \
   http://localhost:8000/question
+```
+
+### Delete PDF in Postman
+
+1. Open Postman.
+2. Set the request method to `DELETE`.
+3. Enter the URL:
+   `http://localhost:8000/pdf/{document_id}`
+4. Replace `{document_id}` with the uploaded document ID, such as `my_document`.
+5. Click `Send`.
+
+Example response:
+
+```json
+{
+  "document_id": "my_document",
+  "message": "PDF deleted successfully"
+}
 ```
 
 ## 🔑 Environment Variables

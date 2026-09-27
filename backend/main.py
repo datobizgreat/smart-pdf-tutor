@@ -122,6 +122,33 @@ async def get_pdf_pages(document_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/pdf/{document_id}")
+async def delete_pdf(document_id: str):
+    """Delete a PDF uploaded to the server by document_id."""
+    try:
+        pdf_files = list(UPLOAD_DIR.glob("*.pdf"))
+        target_pdf = None
+
+        for pdf_file in pdf_files:
+            if document_id == pdf_file.stem or document_id in pdf_file.name:
+                target_pdf = pdf_file
+                break
+
+        if not target_pdf:
+            raise HTTPException(status_code=404, detail="PDF not found")
+
+        target_pdf.unlink()
+        return {
+            "document_id": document_id,
+            "message": "PDF deleted successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/question")
 async def ask_question(request: QuestionRequest):
     """
