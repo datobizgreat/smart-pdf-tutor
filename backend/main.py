@@ -12,10 +12,37 @@ import shutil
 from pydantic import BaseModel
 from typing import List
 
+try:
+    from pypdf import PdfReader
+except ImportError:
+    from PyPDF2 import PdfReader
+
 # Local imports
-from services.pdf_processor import PDFProcessor
 from services.embeddings import EmbeddingsService
 from config import settings
+
+
+class PDFProcessor:
+    """Concrete PDF processor used by the API."""
+
+    def extract_text(self, file_path: str) -> dict:
+        """Extract text from every page and return useful document metadata."""
+        reader = PdfReader(file_path)
+        page_texts = [(page.extract_text() or "") for page in reader.pages]
+        text = "\n\n".join(page_texts).strip()
+        return {
+            "text": text,
+            "total_pages": len(page_texts),
+            "text_preview": text[:500],
+        }
+
+    def get_pages(self, file_path: str) -> list:
+        """Return page text with one-based page numbers."""
+        reader = PdfReader(file_path)
+        return [
+            {"page_number": number, "text": page.extract_text() or ""}
+            for number, page in enumerate(reader.pages, start=1)
+        ]
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -35,7 +62,38 @@ app.add_middleware(
 
 # Initialize services
 pdf_processor = PDFProcessor()
-embeddings_service = EmbeddingsService()
+
+
+class PDFEmbeddingsService(EmbeddingsService):
+    """Concrete local implementation of the embedding operations used by the API."""
+
+    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 150) -> List[str]:
+        if chunk_size <= 0 or overlap < 0 or overlap >= chunk_size:
+            raise ValueError("chunk_size must be positive and overlap smaller than chunk_size")
+        words = text.split()
+        step = chunk_size - overlap
+        return [" ".join(words[start:start + chunk_size])
+                for start in range(0, len(words), step) if words[start:start + chunk_size]]
+
+    def create_embeddings_batch(self, chunks: List[str]) -> List[List[float]]:
+        """Create normalized, deterministic feature-hash vectors without external APIs."""
+        import hashlib
+        import math
+        import re
+
+        dimensions = 384
+        embeddings = []
+        for chunk in chunks:
+            vector = [0.0] * dimensions
+            for token in re.findall(r"\w+", chunk.lower()):
+                value = int.from_bytes(hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest(), "big")
+                vector[value % dimensions] += 1.0 if value & 0x100 else -1.0
+            norm = math.sqrt(sum(component * component for component in vector))
+            embeddings.append([component / norm for component in vector] if norm else vector)
+        return embeddings
+
+
+embeddings_service = PDFEmbeddingsService()
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads")
@@ -82,6 +140,11 @@ async def upload_pdf(file: UploadFile = File(...)):
 
         # Extract text from PDF
         extracted_data = pdf_processor.extract_text(str(file_path))
+
+        extracted_text = extracted_data["text"]
+        chunks = embeddings_service.chunk_text(extracted_text)
+        embeddings_service.create_embeddings_batch(chunks)
+
 
         # Generate document ID (in production, save to database)
         document_id = file.filename.replace('.pdf', '').replace(' ', '_')
@@ -159,6 +222,8 @@ async def ask_question(request: QuestionRequest):
         # TODO: Phase 6 - Retrieve embeddings from vector database
         # TODO: Phase 9 - Send to LLM with context
         
+
+        
         return {
             "question": request.question,
             "answer": "RAG system not yet implemented. Coming in Phase 6-9.",
@@ -194,3 +259,4 @@ async def generate_quiz(document_id: str, num_questions: int = 5):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
